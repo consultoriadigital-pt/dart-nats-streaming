@@ -20,6 +20,8 @@ class Client {
 
   final nats.Client _natsClient = nats.Client();
   bool _connected = false;
+  Function? _onConnect;
+  Function? _onDisconnect;
 
   // ####################################################
   //                      Getters
@@ -51,11 +53,21 @@ class Client {
       retryInterval: retryInterval,
     );
     _connected = _natsClient.status == nats.Status.connected;
+    _onConnect!();
     return _connected;
+  }
+
+  void onDisconnect({required Function function}) {
+    _onDisconnect = function;
+  }
+
+  void onConnect({required Function function}) {
+    _onConnect = function;
   }
 
   void close() {
     _connected = false;
     _natsClient.close();
+    _onDisconnect!();
   }
 }
