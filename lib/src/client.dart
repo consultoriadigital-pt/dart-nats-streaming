@@ -19,6 +19,7 @@ class Client {
   // ####################################################
 
   final nats.Client _natsClient = nats.Client();
+  String? _clientID;
   bool _connected = false;
   Function? _onConnect;
   Function? _onDisconnect;
@@ -28,6 +29,7 @@ class Client {
   // ####################################################
 
   bool get connected => _connected;
+  String? get clientID => _clientID;
 
   // ####################################################
   //                      Methods
@@ -43,7 +45,7 @@ class Client {
     int retryInterval = 10,
   }) async {
     Uuid uuid = Uuid();
-    clientID ??= uuid.v4();
+    _clientID = clientID ?? uuid.v4();
     await _natsClient.connect(
       host,
       port: port,
