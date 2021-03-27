@@ -3,6 +3,6 @@
 /// More dartdocs go here.
 library dart_nats_streaming;
 
-export 'src/dart_nats_streaming_base.dart';
+export 'src/client.dart';
 
 // TODO: Export any libraries intended for clients of this package.
