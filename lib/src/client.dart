@@ -17,5 +17,41 @@ class Client {
   //                      Attributes
   // ####################################################
 
-  nats.Client _natsClient;
+  final nats.Client _natsClient = nats.Client();
+  bool _connected = false;
+
+  // ####################################################
+  //                      Getters
+  // ####################################################
+
+  bool get connected => _connected;
+
+  // ####################################################
+  //                      Methods
+  // ####################################################
+
+  Future<bool> connect({
+    required String host,
+    int port = 4222,
+    nats.ConnectOption? connectOption,
+    int timeout = 5,
+    bool retry = true,
+    int retryInterval = 10,
+  }) async {
+    await _natsClient.connect(
+      host,
+      port: port,
+      connectOption: connectOption,
+      timeout: timeout,
+      retry: retry,
+      retryInterval: retryInterval,
+    );
+    _connected = _natsClient.status == nats.Status.connected;
+    return _connected;
+  }
+
+  void close() {
+    _connected = false;
+    _natsClient.close();
+  }
 }
