@@ -4,10 +4,11 @@ version: 0.0.1
 homepage: https://github.com/consultoriadigital-pt/dart-nats-streaming
 
 environment:
-  sdk: '>=2.10.0 <3.0.0'
+  sdk: '>=2.12.0 <3.0.0'
 
-#dependencies:
-#  path: ^1.7.0
+dependencies:
+  uuid: ^2.2.0
+  dart_nats: ^0.2.0
 
 dev_dependencies:
   pedantic: ^1.9.0
