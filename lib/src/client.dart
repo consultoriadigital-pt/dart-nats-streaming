@@ -39,7 +39,7 @@ class Client {
   int port = 4222;
   bool retryReconnect = true;
   int retryInterval = 10;
-  int pingMaxAttempts = 5;
+  int pingMaxAttempts = 3;
   int failPings = 0;
   int pingInterval = 5;
   int timeout = 10;
@@ -118,6 +118,8 @@ class Client {
       retryInterval: retryInterval,
     );
 
+    // Generante new clientID for reconnection
+    _clientID = Uuid().v4();
     ConnectRequest connectRequest = ConnectRequest()
       ..clientID = this.clientID
       ..heartbeatInbox = this.connectionID
@@ -158,7 +160,7 @@ class Client {
       failPings++;
       print('PING Fail. Attempt: [$failPings/$pingMaxAttempts]');
     }
-    if (failPings >= pingMaxAttempts) {
+    if (failPings >= pingMaxAttempts || _natsClient.status != nats.Status.connected) {
       await _disconnect();
       if (retryReconnect) {
         await _connect();
