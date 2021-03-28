@@ -153,7 +153,6 @@ class Client {
 
   Future<void> _heartbeat() async {
     await ping() ? failPings = 0 : failPings++;
-    print(failPings);
     if (failPings >= pingMaxAttempts) {
       await _disconnect();
       if (retryReconnect) {
@@ -181,8 +180,12 @@ class Client {
 
   Future<bool> ping() async {
     Ping ping = Ping()..connID = connectionIDAscii;
-    nats.Message message = await _natsClient.request(_connectResponse!.pingRequests, ping.writeToBuffer());
-    return message.string.isEmpty;
+    try {
+      nats.Message message = await _natsClient.request(_connectResponse!.pingRequests, ping.writeToBuffer());
+      return message.string.isEmpty;
+    } catch (e) {
+      return false;
+    }
   }
 
   void close() {
