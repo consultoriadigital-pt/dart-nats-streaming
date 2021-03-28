@@ -23,13 +23,28 @@ class Client {
   // ####################################################
 
   final nats.Client _natsClient = nats.Client();
+  final String connectionID = Uuid().v4();
   String _clientID = Uuid().v4();
   bool _connected = false;
   ConnectResponse? _connectResponse;
   Function? _onConnect;
   Function? _onDisconnect;
-  final String connectionID = Uuid().v4();
-  nats.Subscription? _heartbeat;
+  nats.Subscription? _inboxSub;
+
+  // ####################################################
+  //                Configuration Attributes
+  // ####################################################
+
+  String host = '';
+  int port = 4222;
+  bool retryReconnect = true;
+  int retryInterval = 10;
+  int pingMaxAttempts = 5;
+  int failPings = 0;
+  int pingInterval = 5;
+  int timeout = 10;
+  nats.ConnectOption? connectOption;
+  String clusterID = 'default';
 
   // ####################################################
   //                      Getters
@@ -46,25 +61,60 @@ class Client {
   Future<bool> connect({
     required String host,
     int port = 4222,
+    int? timeout,
     nats.ConnectOption? connectOption,
-    int timeout = 5,
-    bool retry = true,
-    int retryInterval = 10,
+    bool? retryReconnect,
+    int? retryInterval,
     String? clientID,
-    String clusterID = 'default',
-    int pingInterval = 10,
-    int maxPingsOutstanding = 3,
+    String? clusterID,
+    int? pingInterval,
+    int? pingMaxAttempts,
   }) async {
+    this.host = host;
+    this.port = port;
+
     if (clientID != null) {
       _clientID = clientID;
     }
 
+    if (retryReconnect != null) {
+      this.retryReconnect = retryReconnect;
+    }
+
+    if (pingMaxAttempts != null) {
+      this.pingMaxAttempts = pingMaxAttempts;
+    }
+
+    if (connectOption != null) {
+      this.connectOption = connectOption;
+    }
+
+    if (retryInterval != null) {
+      this.retryInterval = retryInterval;
+    }
+
+    if (clusterID != null) {
+      this.clusterID = clusterID;
+    }
+
+    if (pingInterval != null) {
+      this.pingInterval = pingInterval;
+    }
+
+    if (timeout != null) {
+      this.timeout = timeout;
+    }
+
+    return await _connect();
+  }
+
+  Future<bool> _connect() async {
     await _natsClient.connect(
       host,
       port: port,
       connectOption: connectOption,
       timeout: timeout,
-      retry: retry,
+      retry: this.retryReconnect,
       retryInterval: retryInterval,
     );
 
@@ -74,21 +124,49 @@ class Client {
       ..connID = this.connectionIDAscii
       ..protocol = 1
       ..pingInterval = pingInterval
-      ..pingMaxOut = maxPingsOutstanding;
+      ..pingMaxOut = this.pingMaxAttempts;
 
     // Connecting to Streaming Server
     _connectResponse =
         ConnectResponse.fromBuffer((await _natsClient.request('_STAN.discover.$clusterID', connectRequest.writeToBuffer())).data);
     unawaited(pingResponseWatchdog());
 
-    _connected = _natsClient.status == nats.Status.connected;
-    _onConnect!();
-    return _connected;
+    if (_natsClient.status == nats.Status.connected) {
+      _connected = true;
+      if (_onConnect != null) {
+        _onConnect!();
+      }
+      unawaited(_heartbeat());
+      return true;
+    }
+    return false;
+  }
+
+  Future<void> _disconnect() async {
+    _natsClient.close();
+    if (_onDisconnect != null) {
+      _onDisconnect!();
+    }
+    _connected = false;
+    await Future.delayed(Duration(seconds: retryInterval), () => {});
+  }
+
+  Future<void> _heartbeat() async {
+    await ping() ? failPings = 0 : failPings++;
+    print(failPings);
+    if (failPings >= pingMaxAttempts) {
+      await _disconnect();
+      if (retryReconnect) {
+        await _connect();
+      }
+    } else {
+      Future.delayed(Duration(seconds: pingInterval), () => _heartbeat());
+    }
   }
 
   Future<void> pingResponseWatchdog() async {
-    _heartbeat = _natsClient.sub(connectionID);
-    await for (nats.Message message in _heartbeat!.stream!) {
+    _inboxSub = _natsClient.sub(connectionID);
+    await for (nats.Message message in _inboxSub!.stream!) {
       _natsClient.pubString(message.replyTo!, '');
     }
   }
