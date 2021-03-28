@@ -152,7 +152,12 @@ class Client {
   }
 
   Future<void> _heartbeat() async {
-    await ping() ? failPings = 0 : failPings++;
+    if (await ping()) {
+      failPings = 0;
+    } else {
+      failPings++;
+      print('PING Fail. Attempt: [$failPings/$pingMaxAttempts]');
+    }
     if (failPings >= pingMaxAttempts) {
       await _disconnect();
       if (retryReconnect) {
