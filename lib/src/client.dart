@@ -25,6 +25,7 @@ class Client {
   final nats.Client _natsClient = nats.Client();
   String _clientID = Uuid().v4();
   bool _connected = false;
+  ConnectResponse? _connectResponse;
   Function? _onConnect;
   Function? _onDisconnect;
   final String connectionID = Uuid().v4();
@@ -75,15 +76,17 @@ class Client {
       ..pingInterval = pingInterval
       ..pingMaxOut = maxPingsOutstanding;
 
-    _natsClient.pub('_STAN.discover.$clusterID', connectRequest.writeToBuffer());
-    unawaited(heartbeatWatchdog());
+    // Connecting to Streaming Server
+    _connectResponse =
+        ConnectResponse.fromBuffer((await _natsClient.request('_STAN.discover.$clusterID', connectRequest.writeToBuffer())).data);
+    unawaited(pingResponseWatchdog());
 
     _connected = _natsClient.status == nats.Status.connected;
     _onConnect!();
     return _connected;
   }
 
-  Future<void> heartbeatWatchdog() async {
+  Future<void> pingResponseWatchdog() async {
     _heartbeat = _natsClient.sub(connectionID);
     await for (nats.Message message in _heartbeat!.stream!) {
       _natsClient.pubString(message.replyTo!, '');
@@ -96,6 +99,12 @@ class Client {
 
   void onConnect({required Function function}) {
     _onConnect = function;
+  }
+
+  Future<bool> ping() async {
+    Ping ping = Ping()..connID = connectionIDAscii;
+    nats.Message message = await _natsClient.request(_connectResponse!.pingRequests, ping.writeToBuffer());
+    return message.string.isEmpty;
   }
 
   void close() {
