@@ -118,23 +118,22 @@ class Client {
       retryInterval: retryInterval,
     );
 
-    // Generante new clientID for reconnection
-    _clientID = Uuid().v4();
-    ConnectRequest connectRequest = ConnectRequest()
-      ..clientID = this.clientID
-      ..heartbeatInbox = this.connectionID
-      ..connID = this.connectionIDAscii
-      ..protocol = 1
-      ..pingInterval = pingInterval
-      ..pingMaxOut = this.pingMaxAttempts;
-
-    // Connecting to Streaming Server
-    _connectResponse =
-        ConnectResponse.fromBuffer((await _natsClient.request('_STAN.discover.$clusterID', connectRequest.writeToBuffer())).data);
-    unawaited(pingResponseWatchdog());
-
     if (_natsClient.status == nats.Status.connected) {
-      _connected = true;
+      // Generante new clientID for reconnection
+      _clientID = Uuid().v4();
+      ConnectRequest connectRequest = ConnectRequest()
+        ..clientID = this.clientID
+        ..heartbeatInbox = this.connectionID
+        ..connID = this.connectionIDAscii
+        ..protocol = 1
+        ..pingInterval = pingInterval
+        ..pingMaxOut = this.pingMaxAttempts;
+
+      // Connecting to Streaming Server
+      _connectResponse =
+          ConnectResponse.fromBuffer((await _natsClient.request('_STAN.discover.$clusterID', connectRequest.writeToBuffer())).data);
+      unawaited(pingResponseWatchdog());
+
       if (_onConnect != null) {
         _onConnect!();
       }
@@ -156,9 +155,11 @@ class Client {
   Future<void> _heartbeat() async {
     if (await ping()) {
       failPings = 0;
+      _connected = true;
     } else {
       failPings++;
-      print('PING Fail. Attempt: [$failPings/$pingMaxAttempts]');
+      print('PING Fail. Attempt: [$failPings/$pingMaxAttempts] '
+          'NATS: [${_natsClient.status == nats.Status.connected ? 'connected' : 'disconnected'}]');
     }
     if (failPings >= pingMaxAttempts || _natsClient.status != nats.Status.connected) {
       await _disconnect();
