@@ -210,4 +210,21 @@ class Client {
     _natsClient.close();
     _onDisconnect!();
   }
+
+  Future<bool> pubString({required String subject, required String string}) async {
+    try {
+      final Encoding encoding = ascii;
+      PubMsg pubMsg = PubMsg()
+        ..clientID = this.clientID
+        ..guid = Uuid().v4()
+        ..subject = subject
+        ..data = encoding.encode(string)
+        ..connID = this.connectionIDAscii;
+      _natsClient.pub('${this._connectResponse!.pubPrefix}.$subject', pubMsg.writeToBuffer());
+      return true;
+    } catch (e) {
+      print('Publishing Fail: [$e]');
+      return false;
+    }
+  }
 }

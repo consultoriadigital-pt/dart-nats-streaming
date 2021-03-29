@@ -333,3 +333,115 @@ class ConnectResponse extends protobuf.GeneratedMessage {
   @protobuf.TagNumber(100)
   void clearPublicKey() => clearField(100);
 }
+
+class PubMsg extends protobuf.GeneratedMessage {
+  static final protobuf.BuilderInfo _i =
+      protobuf.BuilderInfo('PubMsg', package: const protobuf.PackageName('pb'), createEmptyInstance: create)
+        ..aOS(1, 'clientID', protoName: 'clientID')
+        ..aOS(2, 'guid')
+        ..aOS(3, 'subject')
+        ..aOS(4, 'reply')
+        ..a<List<int>>(5, 'data', protobuf.PbFieldType.OY)
+        ..a<List<int>>(6, 'connID', protobuf.PbFieldType.OY, protoName: 'connID')
+        ..a<List<int>>(10, 'sha256', protobuf.PbFieldType.OY)
+        ..hasRequiredFields = false;
+
+  PubMsg._() : super();
+  factory PubMsg() => create();
+  factory PubMsg.fromBuffer(List<int> i, [protobuf.ExtensionRegistry r = protobuf.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(i, r);
+  factory PubMsg.fromJson(String i, [protobuf.ExtensionRegistry r = protobuf.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+  PubMsg clone() => PubMsg()..mergeFromMessage(this);
+  protobuf.BuilderInfo get info_ => _i;
+  @pragma('dart2js:noInline')
+  static PubMsg create() => PubMsg._();
+  PubMsg createEmptyInstance() => create();
+  static protobuf.PbList<PubMsg> createRepeated() => protobuf.PbList<PubMsg>();
+  @pragma('dart2js:noInline')
+  static PubMsg getDefault() => _defaultInstance ??= protobuf.GeneratedMessage.$_defaultFor<PubMsg>(create);
+  static PubMsg? _defaultInstance;
+
+  @protobuf.TagNumber(1)
+  String get clientID => $_getSZ(0);
+  @protobuf.TagNumber(1)
+  set clientID(String v) {
+    $_setString(0, v);
+  }
+
+  @protobuf.TagNumber(1)
+  bool hasClientID() => $_has(0);
+  @protobuf.TagNumber(1)
+  void clearClientID() => clearField(1);
+
+  @protobuf.TagNumber(2)
+  String get guid => $_getSZ(1);
+  @protobuf.TagNumber(2)
+  set guid(String v) {
+    $_setString(1, v);
+  }
+
+  @protobuf.TagNumber(2)
+  bool hasGuid() => $_has(1);
+  @protobuf.TagNumber(2)
+  void clearGuid() => clearField(2);
+
+  @protobuf.TagNumber(3)
+  String get subject => $_getSZ(2);
+  @protobuf.TagNumber(3)
+  set subject(String v) {
+    $_setString(2, v);
+  }
+
+  @protobuf.TagNumber(3)
+  bool hasSubject() => $_has(2);
+  @protobuf.TagNumber(3)
+  void clearSubject() => clearField(3);
+
+  @protobuf.TagNumber(4)
+  String get reply => $_getSZ(3);
+  @protobuf.TagNumber(4)
+  set reply(String v) {
+    $_setString(3, v);
+  }
+
+  @protobuf.TagNumber(4)
+  bool hasReply() => $_has(3);
+  @protobuf.TagNumber(4)
+  void clearReply() => clearField(4);
+
+  @protobuf.TagNumber(5)
+  List<int> get data => $_getN(4);
+  @protobuf.TagNumber(5)
+  set data(List<int> v) {
+    $_setBytes(4, v);
+  }
+
+  @protobuf.TagNumber(5)
+  bool hasData() => $_has(4);
+  @protobuf.TagNumber(5)
+  void clearData() => clearField(5);
+
+  @protobuf.TagNumber(6)
+  List<int> get connID => $_getN(5);
+  @protobuf.TagNumber(6)
+  set connID(List<int> v) {
+    $_setBytes(5, v);
+  }
+
+  @protobuf.TagNumber(6)
+  bool hasConnID() => $_has(5);
+  @protobuf.TagNumber(6)
+  void clearConnID() => clearField(6);
+
+  @protobuf.TagNumber(10)
+  List<int> get sha256 => $_getN(6);
+  @protobuf.TagNumber(10)
+  set sha256(List<int> v) {
+    $_setBytes(6, v);
+  }
+
+  @protobuf.TagNumber(10)
+  bool hasSha256() => $_has(6);
+  @protobuf.TagNumber(10)
+  void clearSha256() => clearField(10);
+}
