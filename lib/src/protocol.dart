@@ -817,3 +817,128 @@ class StartPosition extends protobuf.ProtobufEnum {
 
   const StartPosition._(int v, String n) : super(v, n);
 }
+
+class MsgProto extends protobuf.GeneratedMessage {
+  static final protobuf.BuilderInfo _i =
+      protobuf.BuilderInfo('MsgProto', package: const protobuf.PackageName('pb'), createEmptyInstance: create)
+        ..a<fixnum.Int64>(1, 'sequence', protobuf.PbFieldType.OU6, defaultOrMaker: fixnum.Int64.ZERO)
+        ..aOS(2, 'subject')
+        ..aOS(3, 'reply')
+        ..a<List<int>>(4, 'data', protobuf.PbFieldType.OY)
+        ..aInt64(5, 'timestamp')
+        ..aOB(6, 'redelivered')
+        ..a<int>(7, 'redeliveryCount', protobuf.PbFieldType.OU3, protoName: 'redeliveryCount')
+        ..a<int>(10, 'CRC32', protobuf.PbFieldType.OU3, protoName: 'CRC32')
+        ..hasRequiredFields = false;
+
+  MsgProto._() : super();
+  factory MsgProto() => create();
+  factory MsgProto.fromBuffer(List<int> i, [protobuf.ExtensionRegistry r = protobuf.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(i, r);
+  factory MsgProto.fromJson(String i, [protobuf.ExtensionRegistry r = protobuf.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+  MsgProto clone() => MsgProto()..mergeFromMessage(this);
+  protobuf.BuilderInfo get info_ => _i;
+  @pragma('dart2js:noInline')
+  static MsgProto create() => MsgProto._();
+  MsgProto createEmptyInstance() => create();
+  static protobuf.PbList<MsgProto> createRepeated() => protobuf.PbList<MsgProto>();
+  @pragma('dart2js:noInline')
+  static MsgProto getDefault() => _defaultInstance ??= protobuf.GeneratedMessage.$_defaultFor<MsgProto>(create);
+  static MsgProto? _defaultInstance;
+
+  @protobuf.TagNumber(1)
+  fixnum.Int64 get sequence => $_getI64(0);
+  @protobuf.TagNumber(1)
+  set sequence(fixnum.Int64 v) {
+    $_setInt64(0, v);
+  }
+
+  @protobuf.TagNumber(1)
+  bool hasSequence() => $_has(0);
+  @protobuf.TagNumber(1)
+  void clearSequence() => clearField(1);
+
+  @protobuf.TagNumber(2)
+  String get subject => $_getSZ(1);
+  @protobuf.TagNumber(2)
+  set subject(String v) {
+    $_setString(1, v);
+  }
+
+  @protobuf.TagNumber(2)
+  bool hasSubject() => $_has(1);
+  @protobuf.TagNumber(2)
+  void clearSubject() => clearField(2);
+
+  @protobuf.TagNumber(3)
+  String get reply => $_getSZ(2);
+  @protobuf.TagNumber(3)
+  set reply(String v) {
+    $_setString(2, v);
+  }
+
+  @protobuf.TagNumber(3)
+  bool hasReply() => $_has(2);
+  @protobuf.TagNumber(3)
+  void clearReply() => clearField(3);
+
+  @protobuf.TagNumber(4)
+  List<int> get data => $_getN(3);
+  @protobuf.TagNumber(4)
+  set data(List<int> v) {
+    $_setBytes(3, v);
+  }
+
+  @protobuf.TagNumber(4)
+  bool hasData() => $_has(3);
+  @protobuf.TagNumber(4)
+  void clearData() => clearField(4);
+
+  @protobuf.TagNumber(5)
+  fixnum.Int64 get timestamp => $_getI64(4);
+  @protobuf.TagNumber(5)
+  set timestamp(fixnum.Int64 v) {
+    $_setInt64(4, v);
+  }
+
+  @protobuf.TagNumber(5)
+  bool hasTimestamp() => $_has(4);
+  @protobuf.TagNumber(5)
+  void clearTimestamp() => clearField(5);
+
+  @protobuf.TagNumber(6)
+  bool get redelivered => $_getBF(5);
+  @protobuf.TagNumber(6)
+  set redelivered(bool v) {
+    $_setBool(5, v);
+  }
+
+  @protobuf.TagNumber(6)
+  bool hasRedelivered() => $_has(5);
+  @protobuf.TagNumber(6)
+  void clearRedelivered() => clearField(6);
+
+  @protobuf.TagNumber(7)
+  int get redeliveryCount => $_getIZ(6);
+  @protobuf.TagNumber(7)
+  set redeliveryCount(int v) {
+    $_setUnsignedInt32(6, v);
+  }
+
+  @protobuf.TagNumber(7)
+  bool hasRedeliveryCount() => $_has(6);
+  @protobuf.TagNumber(7)
+  void clearRedeliveryCount() => clearField(7);
+
+  @protobuf.TagNumber(10)
+  int get cRC32 => $_getIZ(7);
+  @protobuf.TagNumber(10)
+  set cRC32(int v) {
+    $_setUnsignedInt32(7, v);
+  }
+
+  @protobuf.TagNumber(10)
+  bool hasCRC32() => $_has(7);
+  @protobuf.TagNumber(10)
+  void clearCRC32() => clearField(10);
+}

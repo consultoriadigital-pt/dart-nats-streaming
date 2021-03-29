@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:dart_nats/dart_nats.dart' as nats;
 import 'package:dart_nats_streaming/src/protocol.dart';
+import 'package:dart_nats_streaming/src/subscription.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:pedantic/pedantic.dart';
 import 'package:uuid/uuid.dart';
@@ -229,7 +230,7 @@ class Client {
     }
   }
 
-  Future<void> subscribe({
+  Future<Subscription?> subscribe({
     required String subject,
     int maxInFlight = 2,
     bool manualAck = false,
@@ -263,6 +264,13 @@ class Client {
           (await _natsClient.request(_connectResponse!.subRequests, subscriptionRequest.writeToBuffer())).data);
       if (subscriptionResponse.hasError()) {
         throw Exception(subscriptionResponse.error);
+      }
+
+      Subscription subscription;
+      if (durableName == null) {
+      } else {
+        subscription = Subscription(subject: subject, subscription: natsSubscription);
+        return subscription;
       }
     } catch (e) {
       print('Subscribe Error: [$e]');
