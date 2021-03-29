@@ -12,7 +12,9 @@ void main() async {
   });
 
   await stan.connect(host: 'localhost', clusterID: 'default');
-  await for (final message in (await stan.subscribe(subject: 'test', queueGroup: 'subscriber', durableName: 'fred'))!.stream) {
-    print(message.asString());
+  final subscription = await stan.subscribe(subject: 'test', queueGroup: 'subscriber', durableName: 'fred');
+  await for (final dataMessage in subscription!.stream) {
+    print(dataMessage.asString());
+    stan.acknowledge(subscription, dataMessage);
   }
 }
