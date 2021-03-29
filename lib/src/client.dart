@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:dart_nats/dart_nats.dart' as nats;
+import 'package:dart_nats_streaming/src/DataMessage.dart';
 import 'package:dart_nats_streaming/src/protocol.dart';
 import 'package:dart_nats_streaming/src/subscription.dart';
 import 'package:fixnum/fixnum.dart';
@@ -269,11 +270,18 @@ class Client {
       Subscription subscription;
       if (durableName == null) {
       } else {
-        subscription = Subscription(subject: subject, subscription: natsSubscription);
+        subscription = Subscription(subject: subject, subscription: natsSubscription, ackInbox: subscriptionResponse.ackInbox);
         return subscription;
       }
     } catch (e) {
       print('Subscribe Error: [$e]');
     }
+  }
+
+  void acknowledge(Subscription subscription, DataMessage dataMessage) {
+    Ack ack = Ack()
+      ..subject = dataMessage.subject
+      ..sequence = dataMessage.sequence;
+    _natsClient.pub(subscription.ackInbox, ack.writeToBuffer());
   }
 }

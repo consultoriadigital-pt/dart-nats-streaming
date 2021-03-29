@@ -942,3 +942,48 @@ class MsgProto extends protobuf.GeneratedMessage {
   @protobuf.TagNumber(10)
   void clearCRC32() => clearField(10);
 }
+
+class Ack extends protobuf.GeneratedMessage {
+  static final protobuf.BuilderInfo _i = protobuf.BuilderInfo('Ack', package: const protobuf.PackageName('pb'), createEmptyInstance: create)
+    ..aOS(1, 'subject')
+    ..a<fixnum.Int64>(2, 'sequence', protobuf.PbFieldType.OU6, defaultOrMaker: fixnum.Int64.ZERO)
+    ..hasRequiredFields = false;
+
+  Ack._() : super();
+  factory Ack() => create();
+  factory Ack.fromBuffer(List<int> i, [protobuf.ExtensionRegistry r = protobuf.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory Ack.fromJson(String i, [protobuf.ExtensionRegistry r = protobuf.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+  Ack clone() => Ack()..mergeFromMessage(this);
+  protobuf.BuilderInfo get info_ => _i;
+  @pragma('dart2js:noInline')
+  static Ack create() => Ack._();
+  Ack createEmptyInstance() => create();
+  static protobuf.PbList<Ack> createRepeated() => protobuf.PbList<Ack>();
+  @pragma('dart2js:noInline')
+  static Ack getDefault() => _defaultInstance ??= protobuf.GeneratedMessage.$_defaultFor<Ack>(create);
+  static Ack? _defaultInstance;
+
+  @protobuf.TagNumber(1)
+  String get subject => $_getSZ(0);
+  @protobuf.TagNumber(1)
+  set subject(String v) {
+    $_setString(0, v);
+  }
+
+  @protobuf.TagNumber(1)
+  bool hasSubject() => $_has(0);
+  @protobuf.TagNumber(1)
+  void clearSubject() => clearField(1);
+
+  @protobuf.TagNumber(2)
+  fixnum.Int64 get sequence => $_getI64(1);
+  @protobuf.TagNumber(2)
+  set sequence(fixnum.Int64 v) {
+    $_setInt64(1, v);
+  }
+
+  @protobuf.TagNumber(2)
+  bool hasSequence() => $_has(1);
+  @protobuf.TagNumber(2)
+  void clearSequence() => clearField(2);
+}
