@@ -109,14 +109,19 @@ class Client {
   }
 
   Future<bool> _connect() async {
-    await _natsClient.connect(
-      host,
-      port: port,
-      connectOption: connectOption,
-      timeout: timeout,
-      retry: this.retryReconnect,
-      retryInterval: retryInterval,
-    );
+    try {
+      await _natsClient.connect(
+        host,
+        port: port,
+        connectOption: connectOption,
+        timeout: timeout,
+        retry: false,
+        retryInterval: retryInterval,
+      );
+    } catch (e) {
+      print('Connecting Error: [$e]');
+      unawaited(_reconnect());
+    }
 
     if (_natsClient.status == nats.Status.connected) {
       // Generante new clientID for reconnection
@@ -145,11 +150,10 @@ class Client {
 
   Future<void> _disconnect() async {
     _natsClient.close();
-    if (_onDisconnect != null) {
+    if (_onDisconnect != null && _connected) {
       _onDisconnect!();
     }
     _connected = false;
-    await Future.delayed(Duration(seconds: retryInterval), () => {});
   }
 
   Future<void> _heartbeat() async {
@@ -162,12 +166,17 @@ class Client {
           'NATS: [${_natsClient.status == nats.Status.connected ? 'connected' : 'disconnected'}]');
     }
     if (failPings >= pingMaxAttempts || _natsClient.status != nats.Status.connected) {
-      await _disconnect();
-      if (retryReconnect) {
-        await _connect();
-      }
+      await _reconnect();
     } else {
       Future.delayed(Duration(seconds: pingInterval), () => _heartbeat());
+    }
+  }
+
+  Future<void> _reconnect() async {
+    await _disconnect();
+    if (retryReconnect) {
+      await Future.delayed(Duration(seconds: retryInterval), () => {});
+      await _connect();
     }
   }
 
