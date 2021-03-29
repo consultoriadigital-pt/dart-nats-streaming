@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:dart_nats/dart_nats.dart' as nats;
 import 'package:dart_nats_streaming/src/protocol.dart';
+import 'package:fixnum/fixnum.dart';
 import 'package:pedantic/pedantic.dart';
 import 'package:uuid/uuid.dart';
 
@@ -225,6 +226,46 @@ class Client {
     } catch (e) {
       print('Publishing Fail: [$e]');
       return false;
+    }
+  }
+
+  Future<void> subscribe({
+    required String subject,
+    int maxInFlight = 2,
+    bool manualAck = false,
+    int ackWaitSeconds = 3,
+    String? queueGroup,
+    String? durableName,
+    StartPosition? startPosition,
+    Int64? startSequence,
+    Int64? startTimeDelta,
+  }) async {
+    try {
+      // Listen Inbox before subscribing
+      final String inbox = '${subject}_${queueGroup ?? ''}_${Uuid().v4()}';
+      final natsSubscription = _natsClient.sub(inbox, queueGroup: queueGroup);
+
+      // Subscribing
+      SubscriptionRequest subscriptionRequest = SubscriptionRequest()
+        ..clientID = this.clientID
+        ..subject = subject
+        ..inbox = inbox;
+
+      if (queueGroup != null) subscriptionRequest.qGroup = queueGroup;
+      if (maxInFlight != null) subscriptionRequest.maxInFlight = maxInFlight;
+      if (ackWaitSeconds != null) subscriptionRequest.ackWaitInSecs = ackWaitSeconds;
+      if (durableName != null) subscriptionRequest.durableName = durableName;
+      if (startPosition != null) subscriptionRequest.startPosition = startPosition;
+      if (startSequence != null) subscriptionRequest.startSequence = startSequence;
+      if (startTimeDelta != null) subscriptionRequest.startTimeDelta = startTimeDelta;
+
+      SubscriptionResponse subscriptionResponse = SubscriptionResponse.fromBuffer(
+          (await _natsClient.request(_connectResponse!.subRequests, subscriptionRequest.writeToBuffer())).data);
+      if (subscriptionResponse.hasError()) {
+        throw Exception(subscriptionResponse.error);
+      }
+    } catch (e) {
+      print('Subscribe Error: [$e]');
     }
   }
 }
