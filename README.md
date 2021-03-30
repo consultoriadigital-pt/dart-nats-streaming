@@ -93,6 +93,7 @@ Use as Stream in StreamBuilder
           StreamBuilder(
             stream: testSubscription.stream,
             builder: (context, AsyncSnapshot<DataMessage> snapshot) {
+              stan.acknowledge(testSubscription, snapshot.data);
               return Text(snapshot.hasData ? '${snapshot.data.asString()}' : '');
             },
           ),
