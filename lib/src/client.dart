@@ -237,11 +237,10 @@ class Client {
   Future<Subscription?> subscribe({
     required String subject,
     int maxInFlight = 2,
-    bool manualAck = false,
     int ackWaitSeconds = 3,
+    StartPosition startPosition = StartPosition.NewOnly,
     String? queueGroup,
     String? durableName,
-    StartPosition? startPosition,
     Int64? startSequence,
     Int64? startTimeDelta,
   }) async {
@@ -254,13 +253,13 @@ class Client {
       SubscriptionRequest subscriptionRequest = SubscriptionRequest()
         ..clientID = this.clientID
         ..subject = subject
+        ..maxInFlight = maxInFlight
+        ..ackWaitInSecs = ackWaitSeconds
+        ..startPosition = startPosition
         ..inbox = inbox;
 
       if (queueGroup != null) subscriptionRequest.qGroup = queueGroup;
-      if (maxInFlight != null) subscriptionRequest.maxInFlight = maxInFlight;
-      if (ackWaitSeconds != null) subscriptionRequest.ackWaitInSecs = ackWaitSeconds;
       if (durableName != null) subscriptionRequest.durableName = durableName;
-      if (startPosition != null) subscriptionRequest.startPosition = startPosition;
       if (startSequence != null) subscriptionRequest.startSequence = startSequence;
       if (startTimeDelta != null) subscriptionRequest.startTimeDelta = startTimeDelta;
 
@@ -270,12 +269,7 @@ class Client {
         throw Exception(subscriptionResponse.error);
       }
 
-      Subscription subscription;
-      if (durableName == null) {
-      } else {
-        subscription = Subscription(subject: subject, subscription: natsSubscription, ackInbox: subscriptionResponse.ackInbox);
-        return subscription;
-      }
+      return Subscription(subject: subject, subscription: natsSubscription, ackInbox: subscriptionResponse.ackInbox);
     } catch (e) {
       print('Subscribe Error: [$e]');
     }

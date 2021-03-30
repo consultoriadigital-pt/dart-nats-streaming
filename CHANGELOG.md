@@ -1,5 +1,6 @@
 ## 0.0.3
 * Trying to republish when fails
+* Fixed non durable connections
 
 ## 0.0.2
 * Null-safety implementation
