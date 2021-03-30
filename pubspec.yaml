@@ -1,6 +1,6 @@
 name: dart_nats_streaming
 description: A client for NATS Streaming Server.
-version: 0.0.2
+version: 0.0.3
 homepage: https://github.com/consultoriadigital-pt/dart-nats-streaming
 
 environment:
