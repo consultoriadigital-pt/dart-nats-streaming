@@ -1,11 +1,12 @@
 import 'dart:convert';
 
 import 'package:dart_nats/dart_nats.dart' as nats;
-import 'package:dart_nats_streaming/src/DataMessage.dart';
+import 'package:dart_nats_streaming/src/data_message.dart';
 import 'package:dart_nats_streaming/src/protocol.dart';
 import 'package:dart_nats_streaming/src/subscription.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:pedantic/pedantic.dart';
+import 'package:retry/retry.dart';
 import 'package:uuid/uuid.dart';
 
 class Client {
@@ -215,20 +216,22 @@ class Client {
   }
 
   Future<bool> pubString({required String subject, required String string}) async {
-    try {
-      final Encoding encoding = ascii;
-      PubMsg pubMsg = PubMsg()
-        ..clientID = this.clientID
-        ..guid = Uuid().v4()
-        ..subject = subject
-        ..data = encoding.encode(string)
-        ..connID = this.connectionIDAscii;
-      _natsClient.pub('${this._connectResponse!.pubPrefix}.$subject', pubMsg.writeToBuffer());
-      return true;
-    } catch (e) {
-      print('Publishing Fail: [$e]');
-      return false;
-    }
+    final r = RetryOptions(maxAttempts: 8, delayFactor: Duration(seconds: retryInterval));
+    return await r.retry(() async {
+      try {
+        final Encoding encoding = ascii;
+        PubMsg pubMsg = PubMsg()
+          ..clientID = this.clientID
+          ..guid = Uuid().v4()
+          ..subject = subject
+          ..data = encoding.encode(string)
+          ..connID = this.connectionIDAscii;
+        return _natsClient.pub('${this._connectResponse!.pubPrefix}.$subject', pubMsg.writeToBuffer());
+      } catch (e) {
+        print('Publishing Fail: [$e]');
+        return false;
+      }
+    });
   }
 
   Future<Subscription?> subscribe({

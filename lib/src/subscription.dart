@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:dart_nats/dart_nats.dart' as nats;
-import 'package:dart_nats_streaming/src/DataMessage.dart';
+import 'package:dart_nats_streaming/src/data_message.dart';
 import 'package:dart_nats_streaming/src/protocol.dart';
 
 class Subscription {
