@@ -1,3 +1,6 @@
+## 0.0.4
+* DataMessage: Changing method name from asString to toString
+
 ## 0.0.3
 * Trying to republish when fails
 * Fixed non durable connections

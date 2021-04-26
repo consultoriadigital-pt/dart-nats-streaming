@@ -15,7 +15,8 @@ class DataMessage {
   Int64 get timestamp => _proto.timestamp;
   bool get isRedelivery => _proto.redelivered;
 
-  String asString() {
+  @override
+  String toString() {
     Encoding encoding = ascii;
     return encoding.decode(encodedPayload);
   }
