@@ -1,3 +1,9 @@
+## 0.0.5
+* Fixing subscriber example.
+* Throw exception when trying to publish with disconnected client
+* Using utf8 to encode and decode messages
+
+
 ## 0.0.4
 * DataMessage: Changing method name from asString to toString
 
