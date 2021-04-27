@@ -17,7 +17,7 @@ class DataMessage {
 
   @override
   String toString() {
-    Encoding encoding = ascii;
+    Encoding encoding = utf8;
     return encoding.decode(encodedPayload);
   }
 }

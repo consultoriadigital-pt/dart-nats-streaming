@@ -219,7 +219,10 @@ class Client {
     final r = RetryOptions(maxAttempts: 8, delayFactor: Duration(seconds: retryInterval));
     return await r.retry(() async {
       try {
-        final Encoding encoding = ascii;
+        if (!connected) {
+          throw Exception('Not connected');
+        }
+        final Encoding encoding = utf8;
         PubMsg pubMsg = PubMsg()
           ..clientID = this.clientID
           ..guid = Uuid().v4()
@@ -228,7 +231,7 @@ class Client {
           ..connID = this.connectionIDAscii;
         return _natsClient.pub('${this._connectResponse!.pubPrefix}.$subject', pubMsg.writeToBuffer());
       } catch (e) {
-        print('Publishing Fail: [$e]');
+        print('Publishing Fail: $e');
         return false;
       }
     });
