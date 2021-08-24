@@ -113,7 +113,6 @@ class Client {
   }
 
   Future<bool> _connect() async {
-    print(_natsClient.status);
     try {
       await _natsClient.connect(
         host,
@@ -140,7 +139,6 @@ class Client {
         ..pingMaxOut = this.pingMaxAttempts;
 
       // Connecting to Streaming Server
-      print(_natsClient.status);
       _connectResponse =
           ConnectResponse.fromBuffer((await _natsClient.request('_STAN.discover.$clusterID', connectRequest.writeToBuffer())).data);
       unawaited(pingResponseWatchdog());
@@ -202,6 +200,9 @@ class Client {
   }
 
   Future<bool> ping() async {
+    if (_natsClient.status != nats.Status.connected) {
+      return false;
+    }
     Ping ping = Ping()..connID = connectionIDAscii;
     try {
       nats.Message message = await _natsClient.request(_connectResponse!.pingRequests, ping.writeToBuffer());
