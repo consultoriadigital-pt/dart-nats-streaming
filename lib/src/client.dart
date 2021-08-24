@@ -147,6 +147,8 @@ class Client {
       if (_onConnect != null) {
         _onConnect!();
       }
+
+      _connected = true;
       return true;
     }
     return false;
