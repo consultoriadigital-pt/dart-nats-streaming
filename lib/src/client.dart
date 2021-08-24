@@ -153,6 +153,7 @@ class Client {
   }
 
   Future<void> _disconnect() async {
+    _natsClient.close();
     _natsClient = nats.Client();
     if (_onDisconnect != null && _connected) {
       _onDisconnect!();
