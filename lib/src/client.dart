@@ -127,6 +127,7 @@ class Client {
       unawaited(_reconnect());
     }
 
+    Future.delayed(Duration(seconds: pingInterval), () => _heartbeat());
     if (_natsClient.status == nats.Status.connected) {
       // Generante new clientID for reconnection
       _clientID = Uuid().v4();
@@ -146,7 +147,6 @@ class Client {
       if (_onConnect != null) {
         _onConnect!();
       }
-      unawaited(_heartbeat());
       return true;
     }
     return false;
@@ -170,18 +170,21 @@ class Client {
           'NATS: [${_natsClient.status == nats.Status.connected ? 'connected' : 'disconnected'}]');
     }
     if (failPings >= pingMaxAttempts || _natsClient.status != nats.Status.connected) {
-      await _reconnect();
-    } else {
+      if (retryReconnect) {
+        await _reconnect();
+      } else {
+        await _disconnect();
+      }
+    }
+    if (retryReconnect || _connected) {
       Future.delayed(Duration(seconds: pingInterval), () => _heartbeat());
     }
   }
 
   Future<void> _reconnect() async {
     await _disconnect();
-    if (retryReconnect) {
-      await Future.delayed(Duration(seconds: retryInterval), () => {});
-      await _connect();
-    }
+    await Future.delayed(Duration(seconds: retryInterval), () => {});
+    await _connect();
   }
 
   Future<void> pingResponseWatchdog() async {
@@ -200,7 +203,7 @@ class Client {
   }
 
   Future<bool> ping() async {
-    if (_natsClient.status != nats.Status.connected) {
+    if (!_connected) {
       return false;
     }
     Ping ping = Ping()..connID = connectionIDAscii;
