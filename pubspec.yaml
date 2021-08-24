@@ -8,7 +8,7 @@ environment:
 
 dependencies:
   uuid: ^3.0.2
-  dart_nats: ^0.2.0
+  dart_nats: ^0.3.4
   protobuf: ^2.0.0
   fixnum: ^1.0.0
   pedantic: ^1.9.0
