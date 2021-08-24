@@ -1,3 +1,6 @@
+## 0.0.6
+* Fixing reconnect.
+
 ## 0.0.5
 * Fixing subscriber example.
 * Throw exception when trying to publish with disconnected client

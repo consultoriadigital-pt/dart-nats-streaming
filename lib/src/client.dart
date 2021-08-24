@@ -119,7 +119,7 @@ class Client {
         port: port,
         connectOption: connectOption,
         timeout: timeout,
-        retry: false,
+        retry: retryReconnect,
         retryInterval: retryInterval,
       );
     } catch (e) {
