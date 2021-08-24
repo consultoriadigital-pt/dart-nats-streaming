@@ -170,21 +170,21 @@ class Client {
           'NATS: [${_natsClient.status == nats.Status.connected ? 'connected' : 'disconnected'}]');
     }
     if (failPings >= pingMaxAttempts || _natsClient.status != nats.Status.connected) {
-      await _reconnect();
+      try {
+        await _reconnect();
+      } catch (e) {
+        print('Stan reconnection fail. Error: [$e]');
+      }
     } else {
       Future.delayed(Duration(seconds: pingInterval), () => _heartbeat());
     }
   }
 
   Future<void> _reconnect() async {
-    try {
-      await _disconnect();
-      if (retryReconnect) {
-        await Future.delayed(Duration(seconds: retryInterval), () => {});
-        await _connect();
-      }
-    } catch (e) {
-      print('Stan reconnection fail. Error: [$e]');
+    await _disconnect();
+    if (retryReconnect) {
+      await Future.delayed(Duration(seconds: retryInterval), () => {});
+      await _connect();
     }
   }
 
