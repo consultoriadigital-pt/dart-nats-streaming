@@ -26,7 +26,7 @@ class Client {
   //                      Attributes
   // ####################################################
 
-  final nats.Client _natsClient = nats.Client();
+  nats.Client _natsClient = nats.Client();
   final String connectionID = Uuid().v4();
   String _clientID = Uuid().v4();
   bool _connected = false;
@@ -153,7 +153,7 @@ class Client {
   }
 
   Future<void> _disconnect() async {
-    _natsClient.close();
+    _natsClient = nats.Client();
     if (_onDisconnect != null && _connected) {
       _onDisconnect!();
     }
@@ -170,11 +170,7 @@ class Client {
           'NATS: [${_natsClient.status == nats.Status.connected ? 'connected' : 'disconnected'}]');
     }
     if (failPings >= pingMaxAttempts || _natsClient.status != nats.Status.connected) {
-      try {
-        await _reconnect();
-      } catch (e) {
-        print('Stan reconnection fail. Error: [$e]');
-      }
+      await _reconnect();
     } else {
       Future.delayed(Duration(seconds: pingInterval), () => _heartbeat());
     }
