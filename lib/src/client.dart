@@ -139,9 +139,11 @@ class Client {
         ..pingMaxOut = this.pingMaxAttempts;
 
       // Connecting to Streaming Server
-      _connectResponse =
-          ConnectResponse.fromBuffer((await _natsClient.request('_STAN.discover.$clusterID', connectRequest.writeToBuffer())).data);
-      unawaited(pingResponseWatchdog());
+      try {
+        _connectResponse =
+            ConnectResponse.fromBuffer((await _natsClient.request('_STAN.discover.$clusterID', connectRequest.writeToBuffer())).data);
+        unawaited(pingResponseWatchdog());
+      } catch (_) {}
 
       if (_onConnect != null) {
         _onConnect!();
