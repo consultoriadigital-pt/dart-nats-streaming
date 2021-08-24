@@ -1,3 +1,6 @@
+## 0.0.7
+* Fixing reconnect.
+
 ## 0.0.6
 * Fixing reconnect.
 
