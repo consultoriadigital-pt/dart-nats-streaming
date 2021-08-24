@@ -139,11 +139,9 @@ class Client {
         ..pingMaxOut = this.pingMaxAttempts;
 
       // Connecting to Streaming Server
-      try {
-        _connectResponse =
-            ConnectResponse.fromBuffer((await _natsClient.request('_STAN.discover.$clusterID', connectRequest.writeToBuffer())).data);
-        unawaited(pingResponseWatchdog());
-      } catch (_) {}
+      _connectResponse =
+          ConnectResponse.fromBuffer((await _natsClient.request('_STAN.discover.$clusterID', connectRequest.writeToBuffer())).data);
+      unawaited(pingResponseWatchdog());
 
       if (_onConnect != null) {
         _onConnect!();
@@ -179,10 +177,14 @@ class Client {
   }
 
   Future<void> _reconnect() async {
-    await _disconnect();
-    if (retryReconnect) {
-      await Future.delayed(Duration(seconds: retryInterval), () => {});
-      await _connect();
+    try {
+      await _disconnect();
+      if (retryReconnect) {
+        await Future.delayed(Duration(seconds: retryInterval), () => {});
+        await _connect();
+      }
+    } catch (e) {
+      print('Stan reconnection fail. Error: [$e]');
     }
   }
 
