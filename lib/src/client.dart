@@ -205,7 +205,7 @@ class Client {
   }
 
   Future<bool> ping() async {
-    if (!_connected) {
+    if (!_connected || _natsClient.status != nats.Status.connected) {
       return false;
     }
     Ping ping = Ping()..connID = connectionIDAscii;
