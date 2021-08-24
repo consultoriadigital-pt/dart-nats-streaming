@@ -113,6 +113,7 @@ class Client {
   }
 
   Future<bool> _connect() async {
+    print(_natsClient.status);
     try {
       await _natsClient.connect(
         host,
@@ -122,32 +123,33 @@ class Client {
         retry: retryReconnect,
         retryInterval: retryInterval,
       );
-
-      if (_natsClient.status == nats.Status.connected) {
-        // Generante new clientID for reconnection
-        _clientID = Uuid().v4();
-        ConnectRequest connectRequest = ConnectRequest()
-          ..clientID = this.clientID
-          ..heartbeatInbox = this.connectionID
-          ..connID = this.connectionIDAscii
-          ..protocol = 1
-          ..pingInterval = pingInterval
-          ..pingMaxOut = this.pingMaxAttempts;
-
-        // Connecting to Streaming Server
-        _connectResponse =
-            ConnectResponse.fromBuffer((await _natsClient.request('_STAN.discover.$clusterID', connectRequest.writeToBuffer())).data);
-        unawaited(pingResponseWatchdog());
-
-        if (_onConnect != null) {
-          _onConnect!();
-        }
-        unawaited(_heartbeat());
-        return true;
-      }
     } catch (e) {
       print('Connecting Error: [$e]');
       unawaited(_reconnect());
+    }
+
+    if (_natsClient.status == nats.Status.connected) {
+      // Generante new clientID for reconnection
+      _clientID = Uuid().v4();
+      ConnectRequest connectRequest = ConnectRequest()
+        ..clientID = this.clientID
+        ..heartbeatInbox = this.connectionID
+        ..connID = this.connectionIDAscii
+        ..protocol = 1
+        ..pingInterval = pingInterval
+        ..pingMaxOut = this.pingMaxAttempts;
+
+      // Connecting to Streaming Server
+      print(_natsClient.status);
+      _connectResponse =
+          ConnectResponse.fromBuffer((await _natsClient.request('_STAN.discover.$clusterID', connectRequest.writeToBuffer())).data);
+      unawaited(pingResponseWatchdog());
+
+      if (_onConnect != null) {
+        _onConnect!();
+      }
+      unawaited(_heartbeat());
+      return true;
     }
     return false;
   }
