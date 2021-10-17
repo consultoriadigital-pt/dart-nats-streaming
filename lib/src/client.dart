@@ -256,7 +256,7 @@ class Client {
           ..clientID = this.clientID
           ..guid = Uuid().v4()
           ..subject = subject
-          ..data =  bytes
+          ..data = bytes
       ..connID = this.connectionIDAscii;
       return _natsClient.pub('${this._connectResponse!.pubPrefix}.$subject', pubMsg.writeToBuffer());
       } catch (e) {
