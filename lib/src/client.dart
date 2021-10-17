@@ -245,6 +245,27 @@ class Client {
     });
   }
 
+  Future<bool> pubBytes({required String subject, required List<int> bytes}) async {
+    final r = RetryOptions(maxAttempts: 8, delayFactor: Duration(seconds: retryInterval));
+    return await r.retry(() async {
+      try {
+        if (!connected) {
+          throw Exception('Not connected');
+        }
+        PubMsg pubMsg = PubMsg()
+          ..clientID = this.clientID
+          ..guid = Uuid().v4()
+          ..subject = subject
+          ..data =  bytes
+      ..connID = this.connectionIDAscii;
+      return _natsClient.pub('${this._connectResponse!.pubPrefix}.$subject', pubMsg.writeToBuffer());
+      } catch (e) {
+      print('Publishing Fail: $e');
+      return false;
+      }
+    });
+  }
+
   Future<Subscription?> subscribe({
     required String subject,
     int maxInFlight = 2,
