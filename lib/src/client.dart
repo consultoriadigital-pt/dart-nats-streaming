@@ -223,7 +223,7 @@ class Client {
     _onDisconnect!();
   }
 
-  Future<bool> pubString({required String subject, required String string}) async {
+  Future<bool> pubString({required String subject, required String string, String? guid}) async {
     final r = RetryOptions(maxAttempts: 8, delayFactor: Duration(seconds: retryInterval));
     return await r.retry(() async {
       try {
@@ -233,7 +233,7 @@ class Client {
         final Encoding encoding = utf8;
         PubMsg pubMsg = PubMsg()
           ..clientID = this.clientID
-          ..guid = Uuid().v4()
+          ..guid = guid ?? Uuid().v4()
           ..subject = subject
           ..data = encoding.encode(string)
           ..connID = this.connectionIDAscii;
@@ -245,7 +245,7 @@ class Client {
     });
   }
 
-  Future<bool> pubBytes({required String subject, required List<int> bytes}) async {
+  Future<bool> pubBytes({required String subject, required List<int> bytes, String? guid}) async {
     final r = RetryOptions(maxAttempts: 8, delayFactor: Duration(seconds: retryInterval));
     return await r.retry(() async {
       try {
@@ -254,7 +254,7 @@ class Client {
         }
         PubMsg pubMsg = PubMsg()
           ..clientID = this.clientID
-          ..guid = Uuid().v4()
+          ..guid = guid ?? Uuid().v4()
           ..subject = subject
           ..data = bytes
       ..connID = this.connectionIDAscii;
