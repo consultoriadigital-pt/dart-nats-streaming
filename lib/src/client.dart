@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:dart_nats/dart_nats.dart' as nats;
 import 'package:dart_nats_streaming/src/data_message.dart';
@@ -8,6 +9,20 @@ import 'package:fixnum/fixnum.dart';
 import 'package:pedantic/pedantic.dart';
 import 'package:retry/retry.dart';
 import 'package:uuid/uuid.dart';
+
+class WssHttpOverrides extends HttpOverrides{
+  final List<int> certificate;
+
+  @override
+  HttpClient createHttpClient(SecurityContext? context){
+    SecurityContext _ctx = context ?? SecurityContext();
+    _ctx.setTrustedCertificatesBytes(certificate);
+    var client = super.createHttpClient(_ctx);
+    return client;
+  }
+
+  WssHttpOverrides(this.certificate);
+}
 
 class Client {
   // ####################################################
@@ -39,6 +54,7 @@ class Client {
   //                Configuration Attributes
   // ####################################################
 
+  Uri? uri;
   String host = '';
   int port = 4222;
   bool retryReconnect = true;
@@ -49,19 +65,68 @@ class Client {
   int timeout = 10;
   nats.ConnectOption? connectOption;
   String clusterID = 'default';
+  HttpClient? _overridedClient;
 
   // ####################################################
   //                      Getters
   // ####################################################
 
   bool get connected => _connected;
+
   String get clientID => _clientID;
+
   List<int> get connectionIDAscii => ascii.encode(this.connectionID);
 
   // ####################################################
   //                      Methods
+  /// Support ws/wss schemas using [uri] to connect to NATS.
+  /// Also support self-signed certificate
+  Future<bool> connectUri(
+    Uri uri, {
+    int timeoutSeconds = 10,
+    nats.ConnectOption? connectOption,
+    bool retryReconnect = true,
+    int retryIntervalSeconds = 10,
+    String? clientID,
+    String clusterID = 'default',
+    int pingIntervalSeconds = 10,
+    int pingMaxAttempts = 3,
+    List<int>? certificate,
+  }) {
+    this.uri = uri;
+    if (certificate != null && certificate.isNotEmpty) {
+      return HttpOverrides.runWithHttpOverrides((){
+        return connect(
+            host: uri.host,
+            port: uri.port,
+            timeout: timeoutSeconds,
+            connectOption: connectOption,
+            retryReconnect: retryReconnect,
+            retryInterval: retryIntervalSeconds,
+            clientID: clientID,
+            clusterID: clusterID,
+            pingInterval: pingIntervalSeconds,
+            pingMaxAttempts: pingMaxAttempts);
+      }, WssHttpOverrides(certificate));
+    } else {
+      return connect(
+          host: uri.host,
+          port: uri.port,
+          timeout: timeoutSeconds,
+          connectOption: connectOption,
+          retryReconnect: retryReconnect,
+          retryInterval: retryIntervalSeconds,
+          clientID: clientID,
+          clusterID: clusterID,
+          pingInterval: pingIntervalSeconds,
+          pingMaxAttempts: pingMaxAttempts);
+    }
+  }
+
   // ####################################################
 
+  ///
+  @Deprecated('Use connectUri instead')
   Future<bool> connect({
     required String host,
     int port = 4222,
@@ -113,18 +178,10 @@ class Client {
   }
 
   Future<bool> _connect() async {
-    try {
-      await _natsClient.connect(
-        host,
-        port: port,
-        connectOption: connectOption,
-        timeout: timeout,
-        retry: retryReconnect,
-        retryInterval: retryInterval,
-      );
-    } catch (e) {
-      print('Connecting Error: [$e]');
-      unawaited(_reconnect());
+    if (uri != null && uri!.scheme == 'wss') {
+      await _wssConnect();
+    } else {
+      await _tcpConnect();
     }
 
     Future.delayed(Duration(seconds: pingInterval), () => _heartbeat());
@@ -140,8 +197,9 @@ class Client {
         ..pingMaxOut = this.pingMaxAttempts;
 
       // Connecting to Streaming Server
-      _connectResponse =
-          ConnectResponse.fromBuffer((await _natsClient.request('_STAN.discover.$clusterID', connectRequest.writeToBuffer())).data);
+      _connectResponse = ConnectResponse.fromBuffer((await _natsClient.request(
+              '_STAN.discover.$clusterID', connectRequest.writeToBuffer()))
+          .data);
       unawaited(pingResponseWatchdog());
 
       if (_onConnect != null) {
@@ -152,6 +210,37 @@ class Client {
       return true;
     }
     return false;
+  }
+
+  Future<void> _tcpConnect() async {
+    try {
+      await _natsClient.tcpConnect(
+        host,
+        port: port,
+        connectOption: connectOption,
+        timeout: timeout,
+        retry: retryReconnect,
+        retryInterval: retryInterval,
+      );
+    } catch (e) {
+      print('Connecting Error: [$e]');
+      unawaited(_reconnect());
+    }
+  }
+
+  Future<void> _wssConnect() async {
+    try {
+      await _natsClient.connect(
+        uri!,
+        connectOption: connectOption,
+        timeout: timeout,
+        retry: retryReconnect,
+        retryInterval: retryInterval,
+      );
+    } catch (e) {
+      print('Connecting Error: [$e]');
+      unawaited(_reconnect());
+    }
   }
 
   Future<void> _disconnect() async {
@@ -171,7 +260,8 @@ class Client {
       print('PING Fail. Attempt: [$failPings/$pingMaxAttempts] '
           'NATS: [${_natsClient.status == nats.Status.connected ? 'connected' : 'disconnected'}]');
     }
-    if (failPings >= pingMaxAttempts || _natsClient.status != nats.Status.connected) {
+    if (failPings >= pingMaxAttempts ||
+        _natsClient.status != nats.Status.connected) {
       if (retryReconnect) {
         await _reconnect();
       } else {
@@ -210,7 +300,8 @@ class Client {
     }
     Ping ping = Ping()..connID = connectionIDAscii;
     try {
-      nats.Message message = await _natsClient.request(_connectResponse!.pingRequests, ping.writeToBuffer());
+      nats.Message message = await _natsClient.request(
+          _connectResponse!.pingRequests, ping.writeToBuffer());
       return message.string.isEmpty;
     } catch (e) {
       return false;
@@ -223,8 +314,10 @@ class Client {
     _onDisconnect!();
   }
 
-  Future<bool> pubString({required String subject, required String string, String? guid}) async {
-    final r = RetryOptions(maxAttempts: 8, delayFactor: Duration(seconds: retryInterval));
+  Future<bool> pubString(
+      {required String subject, required String string, String? guid}) async {
+    final r = RetryOptions(
+        maxAttempts: 8, delayFactor: Duration(seconds: retryInterval));
     return await r.retry(() async {
       try {
         if (!connected) {
@@ -237,7 +330,8 @@ class Client {
           ..subject = subject
           ..data = encoding.encode(string)
           ..connID = this.connectionIDAscii;
-        return _natsClient.pub('${this._connectResponse!.pubPrefix}.$subject', pubMsg.writeToBuffer());
+        return _natsClient.pub('${this._connectResponse!.pubPrefix}.$subject',
+            pubMsg.writeToBuffer());
       } catch (e) {
         print('Publishing Fail: $e');
         return false;
@@ -245,8 +339,10 @@ class Client {
     });
   }
 
-  Future<bool> pubBytes({required String subject, required List<int> bytes, String? guid}) async {
-    final r = RetryOptions(maxAttempts: 8, delayFactor: Duration(seconds: retryInterval));
+  Future<bool> pubBytes(
+      {required String subject, required List<int> bytes, String? guid}) async {
+    final r = RetryOptions(
+        maxAttempts: 8, delayFactor: Duration(seconds: retryInterval));
     return await r.retry(() async {
       try {
         if (!connected) {
@@ -257,11 +353,12 @@ class Client {
           ..guid = guid ?? Uuid().v4()
           ..subject = subject
           ..data = bytes
-      ..connID = this.connectionIDAscii;
-      return _natsClient.pub('${this._connectResponse!.pubPrefix}.$subject', pubMsg.writeToBuffer());
+          ..connID = this.connectionIDAscii;
+        return _natsClient.pub('${this._connectResponse!.pubPrefix}.$subject',
+            pubMsg.writeToBuffer());
       } catch (e) {
-      print('Publishing Fail: $e');
-      return false;
+        print('Publishing Fail: $e');
+        return false;
       }
     });
   }
@@ -292,16 +389,24 @@ class Client {
 
       if (queueGroup != null) subscriptionRequest.qGroup = queueGroup;
       if (durableName != null) subscriptionRequest.durableName = durableName;
-      if (startSequence != null) subscriptionRequest.startSequence = startSequence;
-      if (startTimeDelta != null) subscriptionRequest.startTimeDelta = startTimeDelta;
+      if (startSequence != null)
+        subscriptionRequest.startSequence = startSequence;
+      if (startTimeDelta != null)
+        subscriptionRequest.startTimeDelta = startTimeDelta;
 
-      SubscriptionResponse subscriptionResponse = SubscriptionResponse.fromBuffer(
-          (await _natsClient.request(_connectResponse!.subRequests, subscriptionRequest.writeToBuffer())).data);
+      SubscriptionResponse subscriptionResponse =
+          SubscriptionResponse.fromBuffer((await _natsClient.request(
+                  _connectResponse!.subRequests,
+                  subscriptionRequest.writeToBuffer()))
+              .data);
       if (subscriptionResponse.hasError()) {
         throw Exception(subscriptionResponse.error);
       }
 
-      return Subscription(subject: subject, subscription: natsSubscription, ackInbox: subscriptionResponse.ackInbox);
+      return Subscription(
+          subject: subject,
+          subscription: natsSubscription,
+          ackInbox: subscriptionResponse.ackInbox);
     } catch (e) {
       print('Subscribe Error: [$e]');
     }
