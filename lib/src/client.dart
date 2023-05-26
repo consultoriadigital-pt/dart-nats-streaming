@@ -27,6 +27,7 @@ class Client {
   // ####################################################
 
   final nats.Client _natsClient = nats.Client();
+
   final String connectionID = Uuid().v4();
   String _clientID = Uuid().v4();
   bool _connected = false;
@@ -42,11 +43,11 @@ class Client {
   String host = '';
   int port = 4222;
   bool retryReconnect = true;
-  int retryInterval = 10;
-  int pingMaxAttempts = 3;
+  int retryInterval = 15;
+  int pingMaxAttempts = 60;
   int failPings = 0;
-  int pingInterval = 5;
-  int timeout = 10;
+  int pingInterval = 10;
+  int timeout = 60;
   nats.ConnectOption? connectOption;
   String clusterID = 'default';
 
@@ -114,7 +115,7 @@ class Client {
 
   Future<bool> _connect() async {
     try {
-      await _natsClient.connect(
+      await _natsClient.tcpConnect(
         host,
         port: port,
         connectOption: connectOption,
